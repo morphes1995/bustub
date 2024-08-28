@@ -37,9 +37,6 @@ namespace bustub {
 class LRUKReplacer {
  public:
   /**
-   *
-   * TODO(P1): Add implementation
-   *
    * @brief a new LRUKReplacer.
    * @param num_frames the maximum number of frames the LRUReplacer will be required to store
    */
@@ -55,10 +52,8 @@ class LRUKReplacer {
   ~LRUKReplacer() = default;
 
   /**
-   * TODO(P1): Add implementation
-   *
    * @brief Find the frame with largest backward k-distance and evict that frame. Only frames
-   * that are marked as 'evictable' are candidates for eviction.
+   * that are marked as 'evictable_' are candidates for eviction.
    *
    * A frame with less than k historical references is given +inf as its backward k-distance.
    * If multiple frames have inf backward k-distance, then evict the frame with the earliest
@@ -73,8 +68,6 @@ class LRUKReplacer {
   auto Evict(frame_id_t *frame_id) -> bool;
 
   /**
-   * TODO(P1): Add implementation
-   *
    * @brief Record the event that the given frame id is accessed at current timestamp.
    * Create a new entry for access history if frame id has not been seen before.
    *
@@ -88,33 +81,33 @@ class LRUKReplacer {
   /**
    * TODO(P1): Add implementation
    *
-   * @brief Toggle whether a frame is evictable or non-evictable. This function also
-   * controls replacer's size. Note that size is equal to number of evictable entries.
+   * @brief Toggle whether a frame is evictable_ or non-evictable_. This function also
+   * controls replacer's size. Note that size is equal to number of evictable_ entries.
    *
-   * If a frame was previously evictable and is to be set to non-evictable, then size should
-   * decrement. If a frame was previously non-evictable and is to be set to evictable,
+   * If a frame was previously evictable_ and is to be set to non-evictable_, then size should
+   * decrement. If a frame was previously non-evictable_ and is to be set to evictable_,
    * then size should increment.
    *
    * If frame id is invalid, throw an exception or abort the process.
    *
    * For other scenarios, this function should terminate without modifying anything.
    *
-   * @param frame_id id of frame whose 'evictable' status will be modified
-   * @param set_evictable whether the given frame is evictable or not
+   * @param frame_id id of frame whose 'evictable_' status will be modified
+   * @param set_evictable whether the given frame is evictable_ or not
    */
   void SetEvictable(frame_id_t frame_id, bool set_evictable);
 
   /**
    * TODO(P1): Add implementation
    *
-   * @brief Remove an evictable frame from replacer, along with its access history.
+   * @brief Remove an evictable_ frame from replacer, along with its access history.
    * This function should also decrement replacer's size if removal is successful.
    *
    * Note that this is different from evicting a frame, which always remove the frame
    * with largest backward k-distance. This function removes specified frame id,
    * no matter what its backward k-distance is.
    *
-   * If Remove is called on a non-evictable frame, throw an exception or abort the
+   * If Remove is called on a non-evictable_ frame, throw an exception or abort the
    * process.
    *
    * If specified frame is not found, directly return from this function.
@@ -124,22 +117,40 @@ class LRUKReplacer {
   void Remove(frame_id_t frame_id);
 
   /**
-   * TODO(P1): Add implementation
-   *
-   * @brief Return replacer's size, which tracks the number of evictable frames.
+   * @brief Return replacer's size, which tracks the number of evictable_ frames.
    *
    * @return size_t
    */
   auto Size() -> size_t;
 
  private:
-  // TODO(student): implement me! You can replace these member variables as you like.
-  // Remove maybe_unused if you start using them.
-  [[maybe_unused]] size_t current_timestamp_{0};
-  [[maybe_unused]] size_t curr_size_{0};
-  [[maybe_unused]] size_t replacer_size_;
-  [[maybe_unused]] size_t k_;
+  size_t current_timestamp_{0};
+  size_t curr_size_{0};
+  // The maximum size for the LRUKReplacer is the same as the size of the buffer pool
+  // since it contains placeholders for all of the frames in the BufferPoolManage
+  size_t replacer_size_;
+  size_t k_;
   std::mutex latch_;
+
+  using FramePos = std::list<frame_id_t>::iterator;
+  class Frame {
+   public:
+    Frame() = default;
+    Frame(bool evictable, size_t access_count, std::list<size_t> timestamps, FramePos iter)
+        : evictable_(evictable), access_count_(access_count), timestamps_(std::move(timestamps)), pos_iter_(iter) {}
+
+   public:
+    bool evictable_ = false;
+    size_t access_count_ = 0;
+    std::list<size_t> timestamps_;
+    FramePos pos_iter_;
+  };
+
+  std::list<frame_id_t>
+      history_list_;  // maintain frames with access count less than 3, sorted by earliest timestamp (oldest -> latest)
+  std::list<frame_id_t>
+      cache_list_;  // maintain frames with access count greater or equal to 3, sorted by k-distance (oldest -> latest)
+  std::unordered_map<frame_id_t, Frame> frames_;
 };
 
 }  // namespace bustub
