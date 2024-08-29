@@ -38,10 +38,11 @@ DiskManager::DiskManager(const std::string &db_file) : file_name_(db_file) {
   }
   log_name_ = file_name_.substr(0, n) + ".log";
 
-  log_io_.open(log_name_, std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
+  log_io_.open(log_name_,
+               std::ios::binary | std::ios::in | std::ios::app | std::ios::out);  // std::ios::app for sequential write
   // directory or file does not exist
   if (!log_io_.is_open()) {
-    log_io_.clear();
+    log_io_.clear();  // resets the error flags on the stream
     // create a new file
     log_io_.open(log_name_, std::ios::binary | std::ios::trunc | std::ios::out | std::ios::in);
     if (!log_io_.is_open()) {
@@ -53,7 +54,7 @@ DiskManager::DiskManager(const std::string &db_file) : file_name_(db_file) {
   db_io_.open(db_file, std::ios::binary | std::ios::in | std::ios::out);
   // directory or file does not exist
   if (!db_io_.is_open()) {
-    db_io_.clear();
+    db_io_.clear();  // resets the error flags on the stream
     // create a new file
     db_io_.open(db_file, std::ios::binary | std::ios::trunc | std::ios::out | std::ios::in);
     if (!db_io_.is_open()) {
@@ -115,9 +116,9 @@ void DiskManager::ReadPage(page_id_t page_id, char *page_data) {
     int read_count = db_io_.gcount();
     if (read_count < BUSTUB_PAGE_SIZE) {
       LOG_DEBUG("Read less than a page");
-      db_io_.clear();
+      db_io_.clear();  // resets the error flags on the stream
       // std::cerr << "Read less than a page" << std::endl;
-      memset(page_data + read_count, 0, BUSTUB_PAGE_SIZE - read_count);
+      memset(page_data + read_count, 0, BUSTUB_PAGE_SIZE - read_count);  // padding the hole with zero
     }
   }
 }
@@ -178,7 +179,7 @@ auto DiskManager::ReadLog(char *log_data, int size, int offset) -> bool {
   int read_count = log_io_.gcount();
   if (read_count < size) {
     log_io_.clear();
-    memset(log_data + read_count, 0, size - read_count);
+    memset(log_data + read_count, 0, size - read_count);  // hole padding with zero
   }
 
   return true;
