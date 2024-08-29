@@ -55,7 +55,7 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id) {
 
   if (static_cast<size_t>(frame_id) > this->replacer_size_) {
     char msg[32];
-    sprintf(msg, "invalid frame: %d", frame_id);
+    snprintf(msg, sizeof(msg), "invalid frame: %d", frame_id);
     BUSTUB_ASSERT(false, msg);
   }
 
@@ -64,8 +64,7 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id) {
   if (it == this->frames_.end()) {
     this->curr_size_++;
     this->history_list_.emplace_back(frame_id);
-    // todo ?
-    //    this->frames.emplace(frame_id, Frame(true, 1, {current_timestamp_}, std::prev(this->history_list_.end())));
+    // this->frames.emplace(frame_id, Frame(true, 1, {current_timestamp_}, std::prev(this->history_list_.end())));
     this->frames_.emplace(frame_id, Frame(true, 1, {current_timestamp_}, --(this->history_list_.end())));
 
     return;
@@ -134,7 +133,7 @@ void LRUKReplacer::Remove(frame_id_t frame_id) {
   Frame f = it->second;
   if (!f.evictable_) {
     char msg[64];
-    sprintf(msg, "try to remove an unevictable frame: %d", frame_id);
+    snprintf(msg, sizeof(msg), "try to remove an unevictable frame: %d", frame_id);
     BUSTUB_ASSERT(false, msg);
   }
   // remove from visit list

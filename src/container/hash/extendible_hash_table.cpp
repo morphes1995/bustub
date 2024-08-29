@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "container/hash/extendible_hash_table.h"
 #include <cassert>
 #include <cstdlib>
 #include <functional>
 #include <list>
 #include <utility>
-
-#include "container/hash/extendible_hash_table.h"
+#include "common/logger.h"
 #include "storage/page/page.h"
 
 namespace bustub {
@@ -100,17 +100,29 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
 
     // create two new buckets
     int mask = 1 << bucket->GetDepth();
-    int idx2 =
-        (mask & idx) == 0 ? mask + idx : idx - mask;  // corresponding bucket index to offload KVs in idx-th bucket
-    this->dir_[idx] = std::make_shared<Bucket>(bucket_size_, bucket->GetDepth() + 1);
-    this->dir_[idx2] = std::make_shared<Bucket>(bucket_size_, bucket->GetDepth() + 1);
-    this->num_buckets_ += 1;
+    auto bucket_0 = std::make_shared<Bucket>(bucket_size_, bucket->GetDepth() + 1);
+    auto bucket_1 = std::make_shared<Bucket>(bucket_size_, bucket->GetDepth() + 1);
+    // rehash splitting bucket elements to new buckets
+    for (const auto &item : bucket->GetItems()) {
+      size_t hash_key = std::hash<K>()(item.first);
+      if ((hash_key & mask) != 0U) {
+        bucket_1->Insert(item.first, item.second);
+      } else {
+        bucket_0->Insert(item.first, item.second);
+      }
+    }
+    // using 2 split buckets to replace old one
+    for (size_t i = 0; i < dir_.size(); i++) {
+      if (dir_[i] == bucket) {
+        if ((i & mask) != 0U) {
+          dir_[i] = bucket_1;
+        } else {
+          dir_[i] = bucket_0;
+        }
+      }
+    }
 
-    // rehash kv to new buckets
-    std::for_each(bucket->GetItems().begin(), bucket->GetItems().end(), [this](const auto &item) {
-      size_t new_idx = this->IndexOf(item.first);
-      this->dir_[new_idx]->Insert(item.first, item.second);
-    });
+    this->num_buckets_++;
 
     // update target bucket for next loop (target bucket may be still full)
     idx = IndexOf(key);

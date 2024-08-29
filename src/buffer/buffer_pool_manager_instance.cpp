@@ -50,6 +50,7 @@ auto BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) -> Page * {
     // evicted page in the picked frame is dirty , write it back to disk
     if (p_writeback->is_dirty_) {
       disk_manager_->WritePage(p_writeback->page_id_, p_writeback->data_);
+      p_writeback->is_dirty_ = false;
     }
     // reset the memory and metadata for the evicted page
     page_table_->Remove(p_writeback->page_id_);
@@ -93,6 +94,7 @@ auto BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) -> Page * {
     // evicted page in the picked frame is dirty , write it back to disk
     if (p_writeback->is_dirty_) {
       disk_manager_->WritePage(p_writeback->page_id_, p_writeback->data_);
+      p_writeback->is_dirty_ = false;
     }
     // reset the memory and metadata for the evicted page
     page_table_->Remove(p_writeback->page_id_);
@@ -126,10 +128,15 @@ auto BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) -> 
   }
 
   Page *page = &pages_[f_id];
-  page->is_dirty_ = is_dirty;
 
   if (page->pin_count_ <= 0) {
     return false;
+  }
+
+  // this page may be written by thread1 and become dirty, then read by thread2.
+  // when unpin by thread2 , the is_dirty flag is false, which will cause page->is_dirty_ overwrite
+  if (is_dirty) {
+    page->is_dirty_ = is_dirty;
   }
 
   page->pin_count_--;
