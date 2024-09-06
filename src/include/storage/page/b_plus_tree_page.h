@@ -39,6 +39,11 @@ enum class IndexPageType { INVALID_INDEX_PAGE = 0, LEAF_PAGE, INTERNAL_PAGE };
  * ----------------------------------------------------------------------------
  * | ParentPageId (4) | PageId(4) |
  * ----------------------------------------------------------------------------
+ *
+ * Each B+Tree leaf/internal page corresponds to the content (i.e., the data_ part) of a memory page fetched by buffer
+ * pool. So every time you try to read or write a leaf/internal page, you need to first fetch the page from buffer pool
+ * using its unique page_id, then reinterpret cast to either a leaf or an internal page, and unpin the page after any
+ * writing or reading operations.
  */
 class BPlusTreePage {
  public:
@@ -64,12 +69,12 @@ class BPlusTreePage {
 
  private:
   // member variable, attributes that both internal and leaf page share
-  IndexPageType page_type_ __attribute__((__unused__));
-  lsn_t lsn_ __attribute__((__unused__));
-  int size_ __attribute__((__unused__));
-  int max_size_ __attribute__((__unused__));
-  page_id_t parent_page_id_ __attribute__((__unused__));
-  page_id_t page_id_ __attribute__((__unused__));
+  IndexPageType page_type_;
+  lsn_t lsn_;
+  int size_;
+  int max_size_;
+  page_id_t parent_page_id_;
+  page_id_t page_id_;
 };
 
 }  // namespace bustub

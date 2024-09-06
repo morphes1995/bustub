@@ -31,6 +31,14 @@ namespace bustub {
  *  --------------------------------------------------------------------------
  * | HEADER | KEY(1)+PAGE_ID(1) | KEY(2)+PAGE_ID(2) | ... | KEY(n)+PAGE_ID(n) |
  *  --------------------------------------------------------------------------
+ *  array example :
+ *
+ *  idx   0       1       2         3
+ *  key   x       5       10        20
+ *  val  (,5)   [5,10)  [10,20)   [20,)
+ *
+ *  array_[0] may physically stores a valid key (inflated by internal node splitting ), but logically we do not use it
+ *
  */
 INDEX_TEMPLATE_ARGUMENTS
 class BPlusTreeInternalPage : public BPlusTreePage {
@@ -41,9 +49,25 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   auto KeyAt(int index) const -> KeyType;
   void SetKeyAt(int index, const KeyType &key);
   auto ValueAt(int index) const -> ValueType;
+  auto ValuePosition(const ValueType &value) -> int;
+  void SetValueAt(int index, const ValueType &value);
+
+  auto Search(const KeyType &key, const KeyComparator &comparator) const -> ValueType;
+
+  auto Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) -> int;
+  auto SplitTo(Page *to_page, const KeyType &key, const ValueType &value, const KeyComparator &comparator)
+      -> B_PLUS_TREE_INTERNAL_PAGE_TYPE *;
+
+  void Remove(int idx);
+  void MoveRearToFrontOf(B_PLUS_TREE_INTERNAL_PAGE_TYPE *target_page, const KeyType &target_page_risen_key);
+  void MoveFrontToRearOf(B_PLUS_TREE_INTERNAL_PAGE_TYPE *target_page, const KeyType &this_page_risen_key);
+
+  void MoveAllTo(BPlusTreeInternalPage<KeyType, ValueType, KeyComparator> *target_page, const KeyType &key);
 
  private:
   // Flexible array member for page data.
   MappingType array_[1];
+
+  auto KeyPosition(const KeyType &key, const KeyComparator &comparator) -> int;
 };
 }  // namespace bustub
