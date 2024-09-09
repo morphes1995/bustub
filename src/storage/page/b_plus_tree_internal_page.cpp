@@ -107,7 +107,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::SplitTo(Page *to_page, const KeyType &key, 
   // key and value will insert into this to_page, split one more to tree_to_page
   if (pos < split_pos) {
     // copy kv to tree_to_page
-    std::copy(array_ + split_pos - 1, array_ + GetSize() - split_pos + 1, tree_to_page->array_);
+    std::copy(array_ + split_pos - 1, array_ + GetSize(), tree_to_page->array_);
     tree_to_page->SetSize(GetSize() - split_pos + 1);
 
     // truncate this page
@@ -116,7 +116,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::SplitTo(Page *to_page, const KeyType &key, 
 
   } else {  // key and value will insert into tree_to_page
     // copy kv to tree_to_page
-    std::copy(array_ + split_pos, array_ + GetSize() - split_pos, tree_to_page->array_);
+    std::copy(array_ + split_pos, array_ + GetSize(), tree_to_page->array_);
     tree_to_page->SetSize(GetSize() - split_pos);
     // insert kv to tree_to_page
     tree_to_page->Insert(key, value, comparator);

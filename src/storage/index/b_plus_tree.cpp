@@ -139,8 +139,7 @@ INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::InsertRisenKeyToParent(KeyType &risen_key, BPlusTreePage *page_origin, BPlusTreePage *page_split) {
   // 1. root node split
   if (page_origin->IsRootPage()) {
-    page_id_t new_root_page_id;
-    Page *new_root_page = buffer_pool_manager_->NewPage(&new_root_page_id);
+    Page *new_root_page = buffer_pool_manager_->NewPage(&root_page_id_);
     BUSTUB_ASSERT(new_root_page != nullptr, "allocate new root page_origin failed when splitting");
 
     auto *tree_new_root_page = reinterpret_cast<InternalPage *>(new_root_page->GetData());

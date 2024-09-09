@@ -64,7 +64,7 @@ TEST(BPlusTreeTests, InsertTest1) {
   remove("test.log");
 }
 
-TEST(BPlusTreeTests, DISABLED_InsertTest2) {
+TEST(BPlusTreeTests, InsertTest2) {
   // create KeyComparator and index schema
   auto key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema.get());
@@ -89,6 +89,7 @@ TEST(BPlusTreeTests, DISABLED_InsertTest2) {
     rid.Set(static_cast<int32_t>(key >> 32), value);
     index_key.SetFromInteger(key);
     tree.Insert(index_key, rid, transaction);
+//    tree.Print(bpm);
   }
 
   std::vector<RID> rids;
