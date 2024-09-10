@@ -441,7 +441,28 @@ void BPLUSTREE_TYPE::ReBalanceInternal(InternalPage *internal_page, Transaction 
  * @return : index iterator
  */
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE { return INDEXITERATOR_TYPE(); }
+auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE {
+  BUSTUB_ASSERT(!IsEmpty(), "can not iterate on empty tree");
+
+  Page *page = buffer_pool_manager_->FetchPage(root_page_id_);
+  auto *tree_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
+
+  while (!tree_page->IsLeafPage()) {
+    auto *tree_internal_page = reinterpret_cast<InternalPage *>(page->GetData());
+
+    page_id_t tree_leftmost_child_page_id = tree_internal_page->ValueAt(0);
+    Page *leftmost_child_page = buffer_pool_manager_->FetchPage(tree_leftmost_child_page_id);
+    auto *leftmost_child_tree_page = reinterpret_cast<BPlusTreePage *>(leftmost_child_page->GetData());
+
+    buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+
+    page = leftmost_child_page;
+    tree_page = leftmost_child_tree_page;
+  }
+
+  auto *leftmost_tree_leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
+  return INDEXITERATOR_TYPE(buffer_pool_manager_, page, leftmost_tree_leaf_page, 0);
+}
 
 /*
  * Input parameter is low key, find the leaf page that contains the input key
@@ -449,7 +470,30 @@ auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE { return INDEXITERATOR_TYPE()
  * @return : index iterator
  */
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::Begin(const KeyType &key) -> INDEXITERATOR_TYPE { return INDEXITERATOR_TYPE(); }
+auto BPLUSTREE_TYPE::Begin(const KeyType &key) -> INDEXITERATOR_TYPE {
+  BUSTUB_ASSERT(!IsEmpty(), "can not iterate on empty tree");
+
+  Page *page = buffer_pool_manager_->FetchPage(root_page_id_);
+  auto *tree_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
+
+  while (!tree_page->IsLeafPage()) {
+    auto *tree_internal_page = reinterpret_cast<InternalPage *>(page->GetData());
+
+    page_id_t tree_child_page_id = tree_internal_page->Search(key, comparator_);
+    Page *child_page = buffer_pool_manager_->FetchPage(tree_child_page_id);
+    auto *child_tree_page = reinterpret_cast<BPlusTreePage *>(child_page->GetData());
+
+    buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+
+    page = child_page;
+    tree_page = child_tree_page;
+  }
+
+  auto *tree_leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
+  int idx = tree_leaf_page->KeyPosition(key, comparator_);
+  BUSTUB_ASSERT(comparator_(tree_leaf_page->KeyAt(idx), key) == 0, "target key not found when build iterator");
+  return INDEXITERATOR_TYPE(buffer_pool_manager_, page, tree_leaf_page, idx);
+}
 
 /*
  * Input parameter is void, construct an index iterator representing the end
@@ -457,7 +501,28 @@ auto BPLUSTREE_TYPE::Begin(const KeyType &key) -> INDEXITERATOR_TYPE { return IN
  * @return : index iterator
  */
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::End() -> INDEXITERATOR_TYPE { return INDEXITERATOR_TYPE(); }
+auto BPLUSTREE_TYPE::End() -> INDEXITERATOR_TYPE {
+  BUSTUB_ASSERT(!IsEmpty(), "can not iterate on empty tree");
+
+  Page *page = buffer_pool_manager_->FetchPage(root_page_id_);
+  auto *tree_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
+
+  while (!tree_page->IsLeafPage()) {
+    auto *tree_internal_page = reinterpret_cast<InternalPage *>(page->GetData());
+
+    page_id_t tree_rightmost_child_page_id = tree_internal_page->ValueAt(tree_internal_page->GetSize()-1);
+    Page *rightmost_child_page = buffer_pool_manager_->FetchPage(tree_rightmost_child_page_id);
+    auto *rightmost_child_tree_page = reinterpret_cast<BPlusTreePage *>(rightmost_child_page->GetData());
+
+    buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+
+    page = rightmost_child_page;
+    tree_page = rightmost_child_tree_page;
+  }
+
+  auto *rightmost_tree_leaf_page = reinterpret_cast<LeafPage *>(page->GetData());
+  return INDEXITERATOR_TYPE(buffer_pool_manager_, page, rightmost_tree_leaf_page, rightmost_tree_leaf_page->GetSize());
+}
 
 /**
  * @return Page id of the root of this tree
