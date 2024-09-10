@@ -15,11 +15,12 @@ INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE::IndexIterator() = default;
 
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE::IndexIterator(BufferPoolManager *bpm, Page * curr_page, LeafPage *curr_leaf_page,  int curr_idx)
-    : bpm_(bpm), curr_page_(curr_page), curr_leaf_page_(curr_leaf_page),curr_idx_(curr_idx){}
+INDEXITERATOR_TYPE::IndexIterator(BufferPoolManager *bpm, Page *curr_page, LeafPage *curr_leaf_page, int curr_idx)
+    : bpm_(bpm), curr_page_(curr_page), curr_leaf_page_(curr_leaf_page), curr_idx_(curr_idx) {}
 
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE::~IndexIterator(){
+INDEXITERATOR_TYPE::~IndexIterator() {
+  curr_page_->RUnlatch();
   bpm_->UnpinPage(curr_page_->GetPageId(), false);
 }
 
@@ -29,23 +30,23 @@ auto INDEXITERATOR_TYPE::IsEnd() -> bool {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto INDEXITERATOR_TYPE::operator*() -> const MappingType & {
-  return curr_leaf_page_->ItemAt(curr_idx_);
-}
+auto INDEXITERATOR_TYPE::operator*() -> const MappingType & { return curr_leaf_page_->ItemAt(curr_idx_); }
 
 INDEX_TEMPLATE_ARGUMENTS
 auto INDEXITERATOR_TYPE::operator++() -> INDEXITERATOR_TYPE & {
-  BUSTUB_ASSERT(!IsEnd(),"iterator is already on end, can not advance further !");
+  BUSTUB_ASSERT(!IsEnd(), "iterator is already on end, can not advance further !");
 
-  if(curr_leaf_page_->GetNextPageId() != INVALID_PAGE_ID && curr_idx_ == curr_leaf_page_->GetSize()-1){
-
+  if (curr_leaf_page_->GetNextPageId() != INVALID_PAGE_ID && curr_idx_ == curr_leaf_page_->GetSize() - 1) {
     Page *next_page = bpm_->FetchPage(curr_leaf_page_->GetNextPageId());
+
+    next_page->RLatch();
+    curr_page_->RUnlatch();
     bpm_->UnpinPage(curr_page_->GetPageId(), false);
 
     curr_page_ = next_page;
     curr_leaf_page_ = reinterpret_cast<LeafPage *>(next_page);
-    curr_idx_ =0;
-  }else{
+    curr_idx_ = 0;
+  } else {
     curr_idx_++;
   }
 
@@ -53,14 +54,12 @@ auto INDEXITERATOR_TYPE::operator++() -> INDEXITERATOR_TYPE & {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto INDEXITERATOR_TYPE::operator==(const IndexIterator &itr) const -> bool{
+auto INDEXITERATOR_TYPE::operator==(const IndexIterator &itr) const -> bool {
   return curr_leaf_page_->GetPageId() == itr.curr_leaf_page_->GetPageId() && curr_idx_ == itr.curr_idx_;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto INDEXITERATOR_TYPE::operator!=(const IndexIterator &itr) const -> bool{
-  return !(*this==itr);
-}
+auto INDEXITERATOR_TYPE::operator!=(const IndexIterator &itr) const -> bool { return !(*this == itr); }
 
 template class IndexIterator<GenericKey<4>, RID, GenericComparator<4>>;
 

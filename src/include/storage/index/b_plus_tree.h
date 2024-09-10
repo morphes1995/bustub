@@ -81,11 +81,13 @@ class BPlusTree {
   //  called when first insert
   void StartNewTree(const KeyType &key, const ValueType &value);
   // insert kv into leaf node and deal with node splitting
-  auto InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *pTransaction) -> bool;
+  auto InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) -> bool;
 
   void InsertRisenKeyToParent(KeyType &risen_key, BPlusTreePage *page_origin, BPlusTreePage *page_split);
 
   void UpdateRootPageId(int insert_record = 0);
+
+  void ReleaseLatchesAbove(Transaction *transaction);
 
   /* Debug Routines for FREE!! */
   void ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out) const;
@@ -94,7 +96,10 @@ class BPlusTree {
 
   // member variable
   std::string index_name_;
+
   page_id_t root_page_id_;
+  ReaderWriterLatch root_page_id_latch_;
+
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
   int leaf_max_size_;

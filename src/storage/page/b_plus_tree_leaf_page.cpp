@@ -53,9 +53,7 @@ INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const -> KeyType { return array_[index].first; }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_LEAF_PAGE_TYPE::ItemAt(int idx) -> const MappingType&{
-  return array_[idx];
-}
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::ItemAt(int idx) -> const MappingType & { return array_[idx]; }
 
 INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_LEAF_PAGE_TYPE::KeyPosition(const KeyType &key, const KeyComparator &comparator) -> int {

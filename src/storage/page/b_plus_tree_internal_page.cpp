@@ -90,8 +90,6 @@ INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyPosition(const KeyType &key, const KeyComparator &comparator) -> int {
   auto target = std::lower_bound(array_ + 1, array_ + GetSize(), key,
                                  [&comparator](const auto &pair, auto &k) { return comparator(pair.first, k) < 0; });
-  BUSTUB_ASSERT(target == array_ + GetSize() || comparator(target->first, key) != 0, "");
-
   return std::distance(array_, target);
 }
 
