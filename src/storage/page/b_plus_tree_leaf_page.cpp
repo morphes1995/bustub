@@ -148,6 +148,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFrontToRearOf(B_PLUS_TREE_LEAF_PAGE_TYPE *t
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(B_PLUS_TREE_LEAF_PAGE_TYPE *target_page) {
   std::move(array_, array_ + GetSize(), target_page->array_ + target_page->GetSize());
+  target_page->IncreaseSize(GetSize());
   SetSize(0);
   target_page->SetNextPageId(GetNextPageId());
 }

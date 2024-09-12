@@ -163,4 +163,111 @@ TEST(BPlusTreeTests, DeleteTest2) {
   remove("test.db");
   remove("test.log");
 }
+
+TEST(BPlusTreeTests, MixTest1) {
+  // create KeyComparator and index schema
+  auto key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema.get());
+
+  auto *disk_manager = new DiskManager("test.db");
+  BufferPoolManager *bpm = new BufferPoolManagerInstance(50, disk_manager);
+  // create b+ tree
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm, comparator, 3, 5);
+  GenericKey<8> index_key;
+  RID rid;
+  // create transaction
+  auto *transaction = new Transaction(0);
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+
+  std::vector<int64_t> keys;
+  int64_t scale_factor = 10000;
+  for (int64_t key = 2; key <= scale_factor; key += 2) {
+    keys.push_back(key);
+    keys.push_back(key - 1);
+  }
+  for (auto key : keys) {
+    int64_t value = key & 0xFFFFFFFF;
+    rid.Set(static_cast<int32_t>(key >> 32), value);
+    index_key.SetFromInteger(key);
+    tree.Insert(index_key, rid, transaction);
+  }
+
+  std::vector<RID> rids;
+  for (auto key : keys) {
+    rids.clear();
+    index_key.SetFromInteger(key);
+    tree.GetValue(index_key, &rids);
+    EXPECT_EQ(rids.size(), 1);
+
+    int64_t value = key & 0xFFFFFFFF;
+    EXPECT_EQ(rids[0].GetSlotNum(), value);
+  }
+
+  std::vector<int64_t> remove_keys;
+  for (int64_t key = 1; key <= scale_factor; key += 2) {
+    remove_keys.push_back(key);
+  }
+
+  for (auto key : remove_keys) {
+    index_key.SetFromInteger(key);
+    //    if (key==6841){
+    //      tree.Print(bpm);
+    //    }
+    tree.Remove(index_key, transaction);
+    //    if (key==6841){
+    //      tree.Print(bpm);
+    //    }
+  }
+
+  //  tree.Print(bpm);
+
+  int64_t size = 0;
+  bool is_present;
+
+  for (auto key : keys) {
+    rids.clear();
+    index_key.SetFromInteger(key);
+    is_present = tree.GetValue(index_key, &rids);
+
+    if (!is_present) {
+      if (std::find(remove_keys.begin(), remove_keys.end(), key) == remove_keys.end()) {
+        std::cout << key << std::endl;
+      }
+      EXPECT_NE(std::find(remove_keys.begin(), remove_keys.end(), key), remove_keys.end());
+    } else {
+      EXPECT_EQ(rids.size(), 1);
+      EXPECT_EQ(rids[0].GetPageId(), 0);
+      EXPECT_EQ(rids[0].GetSlotNum(), key);
+      size = size + 1;
+    }
+  }
+
+  EXPECT_EQ(size, keys.size() - remove_keys.size());
+
+  size = 0;
+  int64_t start_key = 2;
+  int64_t current_key = start_key;
+  index_key.SetFromInteger(start_key);
+  for (auto iterator = tree.Begin(index_key); iterator != tree.End(); ++iterator) {
+    auto location = (*iterator).second;
+    EXPECT_EQ(location.GetPageId(), 0);
+    EXPECT_EQ(location.GetSlotNum(), current_key);
+    current_key = current_key + 2;
+    size++;
+  }
+
+  EXPECT_EQ(size, keys.size() - remove_keys.size());
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+  delete transaction;
+  delete disk_manager;
+  delete bpm;
+  remove("test.db");
+  remove("test.log");
+}
+
 }  // namespace bustub

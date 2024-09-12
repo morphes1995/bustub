@@ -84,6 +84,29 @@ void DeleteHelper(BPlusTree<GenericKey<8>, RID, GenericComparator<8>> *tree, con
   delete transaction;
 }
 
+// helper function to delete
+void DeleteGetHelper(BPlusTree<GenericKey<8>, RID, GenericComparator<8>> *tree, const std::vector<int64_t> &keys,
+                  __attribute__((unused)) uint64_t thread_itr = 0) {
+  GenericKey<8> index_key;
+  // create transaction
+  auto *transaction = new Transaction(0);
+  std::vector<RID> rids;
+  for (int key =thread_itr+1;key<=10000;key=key+10) {
+    rids.clear();
+    index_key.SetFromInteger(key);
+    if (key%5==0){
+      tree->GetValue(index_key, &rids);
+      EXPECT_EQ(rids.size(), 1);
+      int64_t value = key & 0xFFFFFFFF;
+      EXPECT_EQ(rids[0].GetSlotNum(), value);
+    }else{
+      tree->Remove(index_key, transaction);
+    }
+
+  }
+  delete transaction;
+}
+
 // helper function to seperate delete
 void DeleteHelperSplit(BPlusTree<GenericKey<8>, RID, GenericComparator<8>> *tree,
                        const std::vector<int64_t> &remove_keys, int total_threads,
@@ -331,6 +354,53 @@ TEST(BPlusTreeConcurrentTest, MixTest) {
   delete bpm;
   remove("test.db");
   remove("test.log");
+}
+
+TEST(BPlusTreeConcurrentTest, MixTest2) {
+  // create KeyComparator and index schema
+  auto key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema.get());
+
+  auto *disk_manager = new DiskManager("test.db");
+  BufferPoolManager *bpm = new BufferPoolManagerInstance(50, disk_manager);
+  // create b+ tree
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm, comparator,254,254);
+  GenericKey<8> index_key;
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  // first, populate index
+  std::vector<int64_t> keys;
+  int64_t scale_factor = 10000;
+  for (int64_t key = 5; key <= scale_factor; key += 5) {
+    keys.push_back(key);
+  }
+  LaunchParallelTest(10, InsertHelper, &tree, keys);
+
+
+  std::vector<RID> rids;
+  for (auto key : keys) {
+    rids.clear();
+    index_key.SetFromInteger(key);
+    tree.GetValue(index_key, &rids);
+    EXPECT_EQ(rids.size(), 1);
+
+    int64_t value = key & 0xFFFFFFFF;
+    EXPECT_EQ(rids[0].GetSlotNum(), value);
+  }
+
+  // concurrent delete & get
+  LaunchParallelTest(10, DeleteGetHelper, &tree, keys);
+
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+  delete disk_manager;
+  delete bpm;
+  remove("test.db");
+  remove("test.log");
+
 }
 
 }  // namespace bustub
