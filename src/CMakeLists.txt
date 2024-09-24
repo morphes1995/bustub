@@ -12,27 +12,29 @@ add_subdirectory(planner)
 add_subdirectory(primer)
 add_subdirectory(optimizer)
 
+#MESSAGE( STATUS "ALL_OBJECT_FILES = ${ALL_OBJECT_FILES}.")
 add_library(bustub STATIC ${ALL_OBJECT_FILES})
 
-set(BUSTUB_LIBS
-        bustub_binder
-        bustub_buffer
-        bustub_catalog
-        bustub_common
-        bustub_concurrency
-        bustub_execution
-        bustub_recovery
-        bustub_type
-        bustub_container_hash
-        bustub_container_disk_hash
-        bustub_storage_disk
-        bustub_storage_index
-        bustub_storage_page
-        bustub_storage_table
-        bustub_planner
-        bustub_primer
-        bustub_optimizer
-        )
+#set(BUSTUB_LIBS
+#        bustub_binder
+##        bustub_statement # dead code
+#        bustub_buffer
+#        bustub_catalog
+#        bustub_common
+#        bustub_concurrency
+#        bustub_execution
+#        bustub_recovery
+#        bustub_type
+#        bustub_container_hash
+#        bustub_container_disk_hash
+#        bustub_storage_disk
+#        bustub_storage_index
+#        bustub_storage_page
+#        bustub_storage_table
+#        bustub_planner
+#        bustub_primer
+#        bustub_optimizer
+#        )
 
 find_package(Threads REQUIRED)
 
@@ -46,7 +48,7 @@ set(BUSTUB_THIRDPARTY_LIBS
 
 target_link_libraries(
         bustub
-        ${BUSTUB_LIBS}
+#        ${BUSTUB_LIBS}
         ${BUSTUB_THIRDPARTY_LIBS})
 
 target_include_directories(
