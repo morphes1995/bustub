@@ -528,10 +528,11 @@ void BPLUSTREE_TYPE::ReBalanceInternal(InternalPage *internal_page, Transaction 
  */
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE {
+  if (root_page_id_ == INVALID_PAGE_ID) {
+    return INDEXITERATOR_TYPE();
+  }
+
   root_page_id_latch_.RLock();
-
-  BUSTUB_ASSERT(!IsEmpty(), "can not iterate on empty tree");
-
   Page *page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto *tree_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
 
@@ -564,8 +565,10 @@ auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE {
  */
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::Begin(const KeyType &key) -> INDEXITERATOR_TYPE {
+  if (root_page_id_ == INVALID_PAGE_ID) {
+    return INDEXITERATOR_TYPE();
+  }
   root_page_id_latch_.RLock();
-  BUSTUB_ASSERT(!IsEmpty(), "can not iterate on empty tree");
 
   Page *page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto *tree_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
@@ -601,10 +604,11 @@ auto BPLUSTREE_TYPE::Begin(const KeyType &key) -> INDEXITERATOR_TYPE {
  */
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::End() -> INDEXITERATOR_TYPE {
+  if (root_page_id_ == INVALID_PAGE_ID) {
+    return INDEXITERATOR_TYPE();
+  }
+
   root_page_id_latch_.RLock();
-
-  BUSTUB_ASSERT(!IsEmpty(), "can not iterate on empty tree");
-
   Page *page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto *tree_page = reinterpret_cast<BPlusTreePage *>(page->GetData());
 
