@@ -94,6 +94,19 @@ class Optimizer {
    */
   auto OptimizeSortLimitAsTopN(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef;
 
+
+  auto IsPredicateFalse(const AbstractExpression &expr) -> bool;
+
+  auto OptimizeReorderJoinUseIndex(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef;
+
+  auto OptimizePredicatePushDown(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef;
+
+  auto OptimizeFalseFilter(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef;
+
+  auto OptimizeRemoveJoin(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef;
+
+  auto OptimizeRemoveColumn(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef;
+
   /**
    * @brief get the estimated cardinality for a table based on the table name. Useful when join reordering. BusTub
    * doesn't support statistics for now, so it's the only way for you to get the table size :(
