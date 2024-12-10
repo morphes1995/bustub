@@ -24,7 +24,7 @@ namespace bustub {
 auto Optimizer::OptimizeOrderByAsIndexScan(const AbstractPlanNodeRef &plan) -> AbstractPlanNodeRef {
   std::vector<AbstractPlanNodeRef> children;
   for (const auto &child : plan->GetChildren()) {
-    children.emplace_back(OptimizeOrderByAsIndexScan(child));
+    children.emplace_back(OptimizeOrderByAsIndexScan(child));// deep first traverse / bottom -> up
   }
   auto optimized_plan = plan->CloneWithChildren(std::move(children));
 

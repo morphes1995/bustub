@@ -46,10 +46,8 @@ auto Optimizer::OptimizeNLJAsIndexJoin(const AbstractPlanNodeRef &plan) -> Abstr
     // Check if expr is equal condition where one is for the left table, and one is for the right table.
     if (const auto *expr = dynamic_cast<const ComparisonExpression *>(&nlj_plan.Predicate()); expr != nullptr) {
       if (expr->comp_type_ == ComparisonType::Equal) {
-        if (const auto *left_expr = dynamic_cast<const ColumnValueExpression *>(expr->children_[0].get());
-            left_expr != nullptr) {
-          if (const auto *right_expr = dynamic_cast<const ColumnValueExpression *>(expr->children_[1].get());
-              right_expr != nullptr) {
+        if (const auto *left_expr = dynamic_cast<const ColumnValueExpression *>(expr->children_[0].get()); left_expr != nullptr) {
+          if (const auto *right_expr = dynamic_cast<const ColumnValueExpression *>(expr->children_[1].get());right_expr != nullptr) {
             // Ensure both exprs have tuple_id == 0
             auto left_expr_tuple_0 =
                 std::make_shared<ColumnValueExpression>(0, left_expr->GetColIdx(), left_expr->GetReturnType());
