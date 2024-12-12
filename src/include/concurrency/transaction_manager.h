@@ -138,7 +138,7 @@ class TransactionManager {
   LockManager *lock_manager_ __attribute__((__unused__));
   LogManager *log_manager_ __attribute__((__unused__));
 
-  /** The global transaction latch is used for checkpointing. */
+  /** The global transaction latch is used for checkpointing(block all transactions) */
   ReaderWriterLatch global_txn_latch_;
 };
 

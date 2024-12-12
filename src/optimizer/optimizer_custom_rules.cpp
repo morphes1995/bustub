@@ -148,7 +148,7 @@ auto Optimizer::OptimizePredicatePushDown(const AbstractPlanNodeRef &plan) -> Ab
     if (const auto *expr = dynamic_cast<const LogicExpression *>(&nlj_plan.Predicate()); expr != nullptr) {
       while (const auto *inner_expr = dynamic_cast<const LogicExpression *>(expr->children_[0].get())) {
         if (const auto *pred = dynamic_cast<const ColumnValueExpression *>(expr->children_[1]->children_[1].get());
-            pred != nullptr) {
+            pred != nullptr && inner_expr != nullptr) {
           join_preds.push_back(expr->children_[1]);
         } else {
           filter_preds.push_back(expr->children_[1]);
